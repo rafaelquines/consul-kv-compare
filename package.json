@@ -1,0 +1,31 @@
+{
+  "name": "consul-kv-compare",
+  "version": "1.0.0",
+  "author": "Rafael Quines <rafaelquines@gmail.com>",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": "./dist/index.js",
+  "scripts": {
+    "lint": "tslint --project .",
+    "start": "node index.js",
+    "build": "tsc -p .",
+    "start:dev": "nodemon"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^3.0.1",
+    "consul": "^0.35.0",
+    "inquirer": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/consul": "^0.23.33",
+    "@types/inquirer": "^6.5.0",
+    "@types/node": "^12.7.2",
+    "nodemon": "^1.19.1",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.19.0",
+    "tslint-config-airbnb-base": "^0.3.0",
+    "tslint-no-unused-expression-chai": "^0.1.4",
+    "typescript": "^3.5.3"
+  }
+}

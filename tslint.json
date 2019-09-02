@@ -1,0 +1,23 @@
+{
+  "extends": [
+    "tslint-config-airbnb-base"
+  ],
+  "rules": {
+    "variable-name": [
+      true,
+      "check-format",
+      "allow-leading-underscore"
+    ],
+    "no-console": false,
+    "no-unused-expression-chai": true,
+    "no-unused-expression": false,
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "no-magic-numbers": false
+  },
+  "rulesDirectory": [
+    "tslint-no-unused-expression-chai"
+  ]
+}
