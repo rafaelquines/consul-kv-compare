@@ -1,6 +1,6 @@
 {
   "name": "consul-kv-compare",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Rafael Quines <rafaelquines@gmail.com>",
   "description": "consul-kv-compare is a command line interface to compare keys between two consul server inside a folder",
   "main": "dist/index.js",
