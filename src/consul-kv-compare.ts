@@ -11,6 +11,7 @@ export class ConsulKvCompare {
   consulBName!: string;
   consulBKeys!: string[];
   folderName!: string;
+  folders!: string[];
 
   constructor(cmdOptions: CommanderStatic) {
     this.cmdOptions = cmdOptions;
@@ -26,55 +27,64 @@ export class ConsulKvCompare {
     });
     if (confirmAAnswer.confirm) {
       try {
-        console.log(`Reading ${this.consulAName} keys...`);
-        this.consulAKeys = await this.getKeys(this.consulA, this.folderName);
-        console.log(`Found ${this.consulAKeys.length} keys on ${this.consulAName}`);
-        const confirmBAnswer = await inquirer.prompt({
-          type: 'confirm',
-          name: 'confirm',
-          default: true,
-          message: `Now, connect to ${this.consulBName} network. Continue?`,
-        });
-        if (confirmBAnswer.confirm) {
-          this.consulBKeys = await this.getKeys(this.consulB, this.folderName);
-          console.log(`Found ${this.consulBKeys.length} keys on ${this.consulBName}`);
-          // console.log('------------------------------');
-          // console.log(`Consul A keys: `);
-          // console.log(this.consulAKeys);
-          // console.log('------------------------------');
-          // console.log(`Consul B keys: `);
-          // console.log(this.consulBKeys);
-          // console.log('------------------------------');
-          const diffA = this.consulAKeys.filter(x => !this.consulBKeys.includes(x));
-          const diffB = this.consulBKeys.filter(x => !this.consulAKeys.includes(x));
-          if (diffA.length === 0 && diffB.length === 0) {
-            console.log('The keys are identical on both servers.');
-          } else {
-            if (diffA.length > 0) {
-              console.log(`Some keys exist only on ${this.consulAName}: `);
-              console.log(diffA);
-            }
-            if (diffB.length > 0) {
-              console.log(`Some keys exist only on ${this.consulAName}: `);
-              console.log(diffB);
-            }
-            console.log('------------------------------');
-            if (diffA && diffA.length > 0) {
-              let questionMsg = `Would you like to add new keys to ${this.consulBName}?`;
-              questionMsg += `\nNOTE: You will need to set the values later.`;
-              const confirmSyncAnswer = await inquirer.prompt({
-                type: 'confirm',
-                name: 'confirmSync',
-                message: questionMsg,
-              });
-              if (confirmSyncAnswer.confirmSync) {
-                await this.saveKeys(this.consulB, this.folderName, diffA);
-                console.log(`Keys successfully added on ${this.consulBName}.`);
+        console.log(`Reading ${this.consulAName} folders...`);
+        this.folders = await this.getFolders(this.consulA);
+        if(this.folders && this.folders.length > 0) {
+          const folderAnswer: any = await inquirer.prompt({
+            name: 'folder',
+            type: 'list',
+            choices: this.folders,
+            message: 'Select Consul folder:',
+          });
+          this.folderName = folderAnswer.folder;
+          this.consulAName = `Consul A [${this.consulA}/${this.folderName}]`;
+          this.consulBName = `Consul B [${this.consulB}/${this.folderName}]`;
+          console.log(`Reading ${this.consulAName} keys...`);
+          this.consulAKeys = await this.getKeys(this.consulA, this.folderName);
+          console.log(`Found ${this.consulAKeys.length} keys on ${this.consulAName}`);
+          const confirmBAnswer = await inquirer.prompt({
+            type: 'confirm',
+            name: 'confirm',
+            default: true,
+            message: `Now, connect to ${this.consulBName} network. Continue?`,
+          });
+          if (confirmBAnswer.confirm) {
+            this.consulBKeys = await this.getKeys(this.consulB, this.folderName);
+            console.log(`Found ${this.consulBKeys.length} keys on ${this.consulBName}`);
+            const diffA = this.consulAKeys.filter(x => !this.consulBKeys.includes(x));
+            const diffB = this.consulBKeys.filter(x => !this.consulAKeys.includes(x));
+            if (diffA.length === 0 && diffB.length === 0) {
+              console.log('The keys are identical on both servers.');
+            } else {
+              if (diffA.length > 0) {
+                console.log(`Some keys exist only on ${this.consulAName}: `);
+                console.log(diffA);
               }
+              if (diffB.length > 0) {
+                console.log(`Some keys exist only on ${this.consulAName}: `);
+                console.log(diffB);
+              }
+              console.log('------------------------------');
+              if (diffA && diffA.length > 0) {
+                let questionMsg = `Would you like to add new keys to ${this.consulBName}?`;
+                questionMsg += `\nNOTE: You will need to set the values later.`;
+                const confirmSyncAnswer = await inquirer.prompt({
+                  type: 'confirm',
+                  name: 'confirmSync',
+                  message: questionMsg,
+                });
+                if (confirmSyncAnswer.confirmSync) {
+                  await this.saveKeys(this.consulB, this.folderName, diffA);
+                  console.log(`Keys successfully added on ${this.consulBName}.`);
+                }
+              }
+              process.exit(0);
             }
+          } else {
             process.exit(0);
           }
         } else {
+          console.log(`Error: No folders found.`);
           process.exit(0);
         }
       } catch (ex) {
@@ -110,19 +120,8 @@ export class ConsulKvCompare {
       });
       this.consulB = this.normalizeUrl(consulBAnswer.consulB);
     }
-
-    // Folder Name
-    if (!this.folderName) {
-      const folderNameAnswer: any = await inquirer.prompt({
-        name: 'folderName',
-        type: 'input',
-        message: 'Consul Folder Name:',
-        validate: inp => this.validateRequired(inp),
-      });
-      this.folderName = folderNameAnswer.folderName;
-    }
-    this.consulAName = `Consul A [${this.consulA}/${this.folderName}]`;
-    this.consulBName = `Consul B [${this.consulB}/${this.folderName}]`;
+    this.consulAName = `Consul A [${this.consulA}]`;
+    this.consulBName = `Consul B [${this.consulB}]`;
   }
 
   private normalizeUrl(url: string) {
@@ -141,6 +140,19 @@ export class ConsulKvCompare {
         continue;
       }
       retKeys.push(key.substr(key.indexOf('/') + 1));
+    }
+    return retKeys.sort();
+  }
+
+  private async getFolders(consulUrl: string) {
+    const consulClient = await this.connect(consulUrl);
+    const keys = await consulClient.kv.keys<string[]>();
+    const retKeys = [];
+    for (const key of keys) {
+      if (key.endsWith('/')) {
+        retKeys.push(key.substr(0, key.indexOf('/')));
+      }
+      continue;
     }
     return retKeys.sort();
   }
