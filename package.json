@@ -1,17 +1,36 @@
 {
   "name": "consul-kv-compare",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "Rafael Quines <rafaelquines@gmail.com>",
-  "description": "",
+  "description": "consul-kv-compare is a command line interface to compare keys between two consul server inside a folder",
   "main": "dist/index.js",
+  "preferGlobal": true,
+  "files": [
+    "dist"
+  ],
   "bin": "./dist/index.js",
   "scripts": {
     "lint": "tslint --project .",
     "start": "node index.js",
     "build": "tsc -p .",
-    "start:dev": "nodemon"
+    "start:dev": "nodemon",
+    "publishToNpm": "npm run build && npm publish"
   },
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafaelquines/consul-kv-compare.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rafaelquines/consul-kv-compare/issues"
+  },
+  "homepage": "https://github.com/rafaelquines/consul-kv-compare",
+  "license": "MIT",
+  "keywords": [
+    "consul",
+    "environment",
+    "variables",
+    "kv"
+  ],
   "dependencies": {
     "commander": "^3.0.1",
     "consul": "^0.35.0",
