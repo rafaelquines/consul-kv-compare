@@ -61,7 +61,7 @@ export class ConsulKvCompare {
                 console.log(diffA);
               }
               if (diffB.length > 0) {
-                console.log(`Some keys exist only on ${this.consulAName}: `);
+                console.log(`Some keys exist only on ${this.consulBName}: `);
                 console.log(diffB);
               }
               console.log('------------------------------');
