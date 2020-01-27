@@ -11,6 +11,7 @@ export class ConsulKvCompare {
   consulBName!: string;
   consulBKeys!: string[];
   folderName!: string;
+  destinationFolderName!: string;
   folders!: string[];
 
   constructor(cmdOptions: CommanderStatic) {
@@ -30,15 +31,20 @@ export class ConsulKvCompare {
         console.log(`Reading ${this.consulAName} folders...`);
         this.folders = await this.getFolders(this.consulA);
         if(this.folders && this.folders.length > 0) {
-          const folderAnswer: any = await inquirer.prompt({
-            name: 'folder',
-            type: 'list',
-            choices: this.folders,
-            message: 'Select Consul folder:',
-          });
-          this.folderName = folderAnswer.folder;
+          if (!this.folderName) {
+            const folderAnswer: any = await inquirer.prompt({
+              name: 'folder',
+              type: 'list',
+              choices: this.folders,
+              message: 'Select Consul folder:',
+            });
+            this.folderName = folderAnswer.folder;
+          }
+          if (!this.destinationFolderName) {
+            this.destinationFolderName = this.folderName;
+          }
           this.consulAName = `Consul A [${this.consulA}/${this.folderName}]`;
-          this.consulBName = `Consul B [${this.consulB}/${this.folderName}]`;
+          this.consulBName = `Consul B [${this.consulB}/${this.destinationFolderName}]`;
           console.log(`Reading ${this.consulAName} keys...`);
           this.consulAKeys = await this.getKeys(this.consulA, this.folderName);
           console.log(`Found ${this.consulAKeys.length} keys on ${this.consulAName}`);
@@ -49,7 +55,7 @@ export class ConsulKvCompare {
             message: `Now, connect to ${this.consulBName} network. Continue?`,
           });
           if (confirmBAnswer.confirm) {
-            this.consulBKeys = await this.getKeys(this.consulB, this.folderName);
+            this.consulBKeys = await this.getKeys(this.consulB, this.destinationFolderName);
             console.log(`Found ${this.consulBKeys.length} keys on ${this.consulBName}`);
             const diffA = this.consulAKeys.filter(x => !this.consulBKeys.includes(x));
             const diffB = this.consulBKeys.filter(x => !this.consulAKeys.includes(x));
@@ -74,7 +80,7 @@ export class ConsulKvCompare {
                   message: questionMsg,
                 });
                 if (confirmSyncAnswer.confirmSync) {
-                  await this.saveKeys(this.consulB, this.folderName, diffA);
+                  await this.saveKeys(this.consulB, this.destinationFolderName, diffA);
                   console.log(`Keys successfully added on ${this.consulBName}.`);
                 }
               }
@@ -99,6 +105,8 @@ export class ConsulKvCompare {
     this.consulA = this.cmdOptions.consulA;
     this.consulB = this.cmdOptions.consulB;
     this.folderName = this.cmdOptions.folderName;
+    this.destinationFolderName = this.cmdOptions.destinationFolderName ||
+      this.cmdOptions.folderName;
 
     // Consul A
     if (!this.consulA) {
