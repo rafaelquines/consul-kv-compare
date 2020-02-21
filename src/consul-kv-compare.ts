@@ -104,9 +104,9 @@ export class ConsulKvCompare {
   async collectInputs() {
     this.consulA = this.cmdOptions.consulA;
     this.consulB = this.cmdOptions.consulB;
-    this.folderNameA = this.cmdOptions.folderName;
-    this.folderNameB = this.cmdOptions.destinationFolderName ||
-      this.cmdOptions.folderName;
+    this.folderNameA = this.cmdOptions.folderNameA;
+    this.folderNameB = this.cmdOptions.folderNameB ||
+      this.cmdOptions.folderNameA;
 
     // Consul A
     if (!this.consulA) {
